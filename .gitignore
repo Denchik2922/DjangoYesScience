@@ -1,0 +1,10 @@
+# Created by .ignore support plugin (hsz.mobi)
+fontawesome/
+media/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+.pyc
+settings.py
+local_setting.py
+global_setting.py

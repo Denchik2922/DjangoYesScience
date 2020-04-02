@@ -1,0 +1,148 @@
+{% extends "base_template.html" %}
+
+
+{% block title %}
+    Тестирование
+{% endblock %}
+
+{% block content %}
+    <div class="container" id="start_test_menu">
+        <row>
+            <col-12>
+                <h4>Тест будет состоять из {{ paginator.count }} вопросов</h4>
+                <button id="start_test">Начать тест</button>
+            </col-12>
+
+        </row>
+
+    </div>
+
+    <div class="container testing_content" id="test_page" style="display: none">
+
+        {% for question in question_list %}
+            <div class="row tile_test ">
+                <div class="col-12 ">
+                    <h2>{{ question.title }}</h2>
+                    <p>{{ page_obj.number }} / {{ paginator.count }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <form action="" class="answers">
+                        <ul>
+                            {% for answer in question.wronganswer_set.all %}
+                                 <li>
+                                    <input onclick="check(0)" id="test" name="test" type="radio">
+                                    <label for="">{{ answer.title }}</label>
+                                 </li>
+                            {% endfor %}
+                             {% for answer in question.trueanswer_set.all %}
+                                 <li>
+                                    <input onclick="check(1)" id="test" name="test" type="radio">
+                                    <label for="">{{ answer.title }}</label>
+                                 </li>
+                            {% endfor %}
+                        </ul>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 count_tests">
+                    <form action="{% url 'test_url' %}" method="post">
+                        {% csrf_token %}
+                        <label id="count_test" for="" hidden>{{ paginator.count }}</label>
+                        <input type="text" id="status" name="status" hidden>
+                        {% if page_obj.has_next %}
+                            <button style="display: none" class="btn_next"><a class="page_obj" href="?page={{ page_obj.next_page_number }}">Далее</a>
+                            </button>
+                        {% else %}
+                            <input style="display: none; color:white; " class="btn_next" onclick="update_status()"
+                                   type="submit" value="Завершить">
+
+                        {% endif %}
+                    </form>
+
+
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let balls = 0
+        let all_balls = 0
+        let count_test = document.getElementById('count_test').innerText
+
+        function check(num) {
+            $(".btn_next").css('display','inline-flex')
+            balls = num
+        }
+
+        $('#start_test').click(function () {
+            $('#start_test_menu').css('display', 'none')
+            $('#test_page').css('display', 'block')
+        })
+
+        function ajaxRequest(page_url) {
+            $.ajax({
+                url: page_url,
+                type: 'GET',
+                success: (data) => {
+                    $('.testing_content').empty()
+                    $('.testing_content').append($(data).filter('.testing_content').html())
+                }
+            })
+        }
+
+        function update_status() {
+            all_balls += balls;
+            console.log(all_balls);
+            if (count_test == all_balls) {
+                status = 'Специалист'
+            }
+            else if (Math.round(count_test / 2) <= all_balls) {
+                status = 'Знаток'
+            }
+            else if (Math.round(count_test / 4) <= all_balls || all_balls == 0 ) {
+                status = 'Новичек'
+            }
+            document.getElementById("status").value = status
+
+
+        }
+
+
+        function Test() {
+            $('.page_obj').each((index, el) => {
+                $(el).click((e) => {
+                    e.preventDefault()
+                    let page_url = $(el).attr('href')
+                    page_url = 'http://127.0.0.1:8000/testing/' + page_url
+
+                    $("input[name='test']").each(function () {
+                        if ($(this).prop('checked')) {
+
+                            ajaxRequest(page_url)
+                        }
+
+                    })
+
+                })
+            })
+        }
+
+        $(document).ready(function () {
+
+            update_status()
+            Test()
+        })
+
+        $(document).ajaxStop(function () {
+
+            update_status()
+            Test()
+        })
+    </script>
+
+
+{% endblock %}
